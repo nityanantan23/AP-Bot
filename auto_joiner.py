@@ -732,6 +732,8 @@ def main():
               res = session.get('https://cheerful-fern-saguaro.glitch.me/otp/'+ format(data))
               title =  res.html.find('title')
               print(title[0].text)
+              discord_notification(title[0].text)
+
             else:
                 print("QR Code not detected")
         else:
