@@ -21,8 +21,9 @@ from webdriver_manager.utils import ChromeType
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from msedge.selenium_tools import Edge, EdgeOptions
 from getpass import getpass
-
+import chime
 from discord import Webhook, RequestsWebhookAdapter, Embed, errors
+
 
 browser: webdriver.Chrome = None
 total_members = None
@@ -205,8 +206,8 @@ def discord_notification(title, description):
     webhook = Webhook.from_url(discord_webhook_url, adapter=RequestsWebhookAdapter())
 
     embed = Embed(title=f"{title}", description=f"{description}",colour=0x0011FF)
-    embed.set_author(name="Ms-Teams-Auto-Joiner-Bot")
-    embed.set_footer(text=f"\nTime: [{datetime.now():%Y:%m:%d-%H:%M:%S}]\nlogin-id: {config['email']}")
+    embed.set_author(name="Teams-Bot")
+    embed.set_footer(text=f"\nTime: [{datetime.now():%Y:%m:%d-%H:%M:%S}]")
 
     try:
         webhook.send(embed=embed)
@@ -717,6 +718,7 @@ def main():
         check_interval = config['check_interval']
 
     interval_count = 0
+    flag = True
     while 1:
         timestamp = datetime.now()
         if "pause_search" in config and config['pause_search'] and current_meeting is not None:
@@ -726,16 +728,21 @@ def main():
             screen = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             qr_decoder = cv2.QRCodeDetector()
             data, bbox, rectified_image = qr_decoder.detectAndDecode(screen)
-            if len(data)>0:
-              print("QR Code has been shown"+ format(data))
-              session = HTMLSession()
-              res = session.get('https://cheerful-fern-saguaro.glitch.me/otp/'+ format(data))
-              title =  res.html.find('title')
-              print(title[0].text)
-              discord_notification(title[0].text)
-
-            else:
-                print("QR Code not detected")
+            if flag:
+                if len(data)>0:
+                    print("QR Code has been shown"+ format(data))
+                    session = HTMLSession()
+                    res = session.get('https://cheerful-fern-saguaro.glitch.me/otp/'+ format(data))
+                    title =  res.html.find('title')
+                    print(title[0].text)
+                    if title[0].text == "Class not found":
+                        discord_notification("Failed","Class not found")
+                    elif "attended" in title[0].text: 
+                        discord_notification(title[0].text, "QR Code has been shown")
+                        chime.success()
+                        flag = False
+                else:
+                    print("QR Code not detected")
         else:
             print(f"\n[{timestamp:%H:%M:%S}] Looking for new meetings")
 
@@ -777,6 +784,7 @@ def main():
         if "leave_if_last" in config and config['leave_if_last'] and interval_count % 5 == 0 and interval_count > 0:
             if current_meeting is not None and members_count is not None and total_members is not None:
                 if handle_leave_threshold(members_count, total_members):
+                    flag = True
                     total_members = None
 
         interval_count += 1
