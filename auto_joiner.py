@@ -732,7 +732,7 @@ def main():
                 if len(data)>0:
                     print("QR Code has been shown"+ format(data))
                     session = HTMLSession()
-                    res = session.get('https://cheerful-fern-saguaro.glitch.me/otp/'+ format(data))
+                    res = session.get('https://smiling-jolly-spell.glitch.me/otp/'+ format(data))
                     title =  res.html.find('title')
                     print(title[0].text)
                     if title[0].text == "Class not found":

@@ -6,3 +6,5 @@ requests
 pyzbar
 Pillow
 opencv-python
+requests_html
+chime
