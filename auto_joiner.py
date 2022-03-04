@@ -333,7 +333,7 @@ def get_meetings(teams):
                 for meeting_elem in meeting_elems:
                     meeting_id = meeting_elem.get_attribute("id")
                     time_started = int(meeting_id.replace("m", "")[:-3])
-
+                    print(f"Meeting started at {time_started}")
                     # already joined calendar meeting
                     correlation_id = meeting_elem.find_element_by_css_selector(
                         "calling-join-button > button").get_attribute("track-data")
@@ -625,12 +625,26 @@ def main():
 
     email = config['email']
     password = config['password']
+    intakeCode = config['intakeCode']
 
     if email == "":
         email = input('Email: ')
 
     if password == "":
         password = getpass('Password: ')
+
+    if 'run_at_time' in config and config['run_at_time'] != "":
+        now = datetime.now()
+        run_at = datetime.strptime(config['run_at_time'], "%H:%M").replace(year=now.year, month=now.month, day=now.day)
+
+        if run_at.time() < now.time():
+            run_at = datetime.strptime(config['run_at_time'], "%H:%M").replace(year=now.year, month=now.month,
+                                                                               day=now.day + 1)
+
+        start_delay = (run_at - now).total_seconds()
+
+        print(f"Waiting until {run_at} ({int(start_delay)}s)")
+        time.sleep(start_delay)
 
     init_browser()
 
@@ -732,7 +746,7 @@ def main():
                 if len(data)>0:
                     print("QR Code has been shown"+ format(data))
                     session = HTMLSession()
-                    res = session.get('https://smiling-jolly-spell.glitch.me/otp/'+ format(data))
+                    res = session.get('https://thirsty-wobbly-harmonica.glitch.me/otp/'+ format(data) + '/' + intakeCode)
                     title =  res.html.find('title')
                     print(title[0].text)
                     if title[0].text == "Class not found":
@@ -799,19 +813,6 @@ if __name__ == "__main__":
         print("Configuration file missing or in wrong format")
         print(str(e))
         exit(1)
-
-    if 'run_at_time' in config and config['run_at_time'] != "":
-        now = datetime.now()
-        run_at = datetime.strptime(config['run_at_time'], "%H:%M").replace(year=now.year, month=now.month, day=now.day)
-
-        if run_at.time() < now.time():
-            run_at = datetime.strptime(config['run_at_time'], "%H:%M").replace(year=now.year, month=now.month,
-                                                                               day=now.day + 1)
-
-        start_delay = (run_at - now).total_seconds()
-
-        print(f"Waiting until {run_at} ({int(start_delay)}s)")
-        time.sleep(start_delay)
 
     try:
         main()
