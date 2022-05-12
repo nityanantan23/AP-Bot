@@ -4,6 +4,7 @@
   - [This is a fork of Teams-auto-joiner by TobiasPankner](#this-is-a-fork-of-teams-auto-joiner-by-tobiaspankner)
   - [Prerequisites](#prerequisites)
   - [Configuration options](#configuration-options)
+  - [Notes](#notes)
   - [Run the script](#run-the-script)
 
 Python script to automatically join Microsoft Teams meetings.
@@ -105,6 +106,8 @@ I also made a short tutorial video on how to setup the bot: https://youtu.be/Ygk
       ```json
       "discord_webhook_url" : "your_discord_channel_webHook_url"
       ```
+## Notes
+If using microsoft edge, enable "Clear browsing data on close" on microsoft edge settings
 
 ## Run the script
 
