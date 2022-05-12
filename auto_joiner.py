@@ -1,3 +1,4 @@
+import contextlib
 import json
 import random
 import re
@@ -23,6 +24,7 @@ from msedge.selenium_tools import Edge, EdgeOptions
 from getpass import getpass
 import chime
 from discord import Webhook, RequestsWebhookAdapter, Embed, errors
+import os
 
 
 browser: webdriver.Chrome = None
@@ -56,8 +58,7 @@ class Team:
 
     def get_elem(self):
         team_header = browser.find_element_by_css_selector(f"h3[id='{self.t_id}'")
-        team_elem = team_header.find_element_by_xpath("..")
-        return team_elem
+        return team_header.find_element_by_xpath("..")
 
     def expand_channels(self):
         try:
@@ -96,13 +97,9 @@ class Team:
         if blacklist_item is None:
             return
 
-        if len(blacklist_item['channel_names']) == 0:
-            for channel in self.channels:
+        for channel in self.channels:
+            if len(blacklist_item['channel_names']) != 0 and channel.name in blacklist_item['channel_names'] or len(blacklist_item['channel_names']) == 0:
                 channel.blacklisted = True
-        else:
-            for channel in self.channels:
-                if channel.name in blacklist_item['channel_names']:
-                    channel.blacklisted = True
 
 
 class Channel:
@@ -129,7 +126,7 @@ class Meeting:
         if "blacklist_meeting_re" in config and config['blacklist_meeting_re'] != "":
 
             regex = config['blacklist_meeting_re']
-            return True if re.search(regex, self.title) else False
+            return bool(re.search(regex, self.title))
 
     def __str__(self):
         return f"\t{self.title} {self.time_started}" + (" [Calendar]" if self.calendar_meeting else " [Channel]") + (
@@ -144,10 +141,11 @@ def load_config():
 
 def init_browser():
     global browser
-
     if "chrome_type" in config and config['chrome_type'] == "msedge":
         chrome_options = EdgeOptions()
         chrome_options.use_chromium = True
+        path ="user-data-dir=C:\\Users\\{0}\\AppData\\Local\\Microsoft\\Edge\\User Data".format(os.environ.get('USERNAME'))
+        chrome_options.add_argument(path);
 
     else:
         chrome_options = webdriver.ChromeOptions()
@@ -166,7 +164,6 @@ def init_browser():
         }
     })
     chrome_options.add_argument('--no-sandbox')
-
     chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
 
     if 'headless' in config and config['headless']:
@@ -176,17 +173,15 @@ def init_browser():
     if 'mute_audio' in config and config['mute_audio']:
         chrome_options.add_argument("--mute-audio")
 
-    if 'chrome_type' in config:
-        if config['chrome_type'] == "chromium":
-            browser = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install(),
-                                       options=chrome_options)
-        elif config['chrome_type'] == "msedge":
-            browser = Edge(EdgeChromiumDriverManager().install(), options=chrome_options)
-        else:
-            browser = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+    if 'chrome_type' in config and config['chrome_type'] == "chromium":
+        browser = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install(),
+                                   options=chrome_options)
+    elif 'chrome_type' in config and config['chrome_type'] == "msedge":
+        browser = Edge(EdgeChromiumDriverManager().install(), options=chrome_options)
+        browser.delete_all_cookies()
+
     else:
         browser = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
-
     # make the window a minimum width to show the meetings menu
     window_size = browser.get_window_size()
     if window_size['width'] < 1200:
@@ -211,7 +206,7 @@ def discord_notification(title, description):
 
     try:
         webhook.send(embed=embed)
-    except:
+    except Exception:
         print("Failed to send discord notification")
 
 
@@ -269,11 +264,8 @@ def change_organisation(org_num):
 
 
 def prepare_page(include_calendar):
-    try:
+    with contextlib.suppress(exceptions.JavascriptException):
         browser.execute_script("document.getElementById('toast-container').remove()")
-    except exceptions.JavascriptException:
-        pass
-
     if include_calendar:
         switch_to_calendar_tab()
 
@@ -301,7 +293,6 @@ def prepare_page(include_calendar):
                     time.sleep(2)
                 except Exception as e:
                     print(e)
-                    pass
 
 
 def get_all_teams():
@@ -385,7 +376,7 @@ def decide_meeting():
     newest_meetings = []
 
     meetings = [meeting for meeting in meetings if not meeting.calendar_blacklisted]
-    if len(meetings) == 0:
+    if not meetings:
         return
 
     meetings.sort(key=lambda x: x.time_started, reverse=True)
@@ -430,11 +421,7 @@ def join_meeting(meeting):
         return
 
     uuid = re.search(uuid_regex, join_now_btn.get_attribute("track-data"))
-    if uuid is not None:
-        active_correlation_id = uuid.group(0)
-    else:
-        active_correlation_id = ""
-
+    active_correlation_id = uuid[0] if uuid is not None else ""
     # turn camera off
     video_btn = browser.find_element_by_css_selector("toggle-button[data-tid='toggle-video']>div>button")
     video_is_on = video_btn.get_attribute("aria-pressed")
@@ -451,14 +438,11 @@ def join_meeting(meeting):
 
     if 'random_delay' in config: 
         if isinstance(config['random_delay'], bool):
-            print(f"Please update the random_delay in config.json file as per latest instructions in README")
-            if config['random_delay']:
-                delay = random.randrange(10, 31, 1)
-            else:
-                delay = 0
+            print("Please update the random_delay in config.json file as per latest instructions in README")
+            delay = random.randrange(10, 31, 1) if config['random_delay'] else 0
         else:
             delay = random.randrange(config['random_delay'][0], config['random_delay'][1] + 1 , 1)
-        
+
         if delay > 0:
             print(f"Wating for {delay}s")
             time.sleep(delay)
@@ -492,11 +476,9 @@ def join_meeting(meeting):
             discord_notification("Sent message", {config["join_message"]})
         except (exceptions.JavascriptException, exceptions.ElementNotInteractableException):
             print("Failed to send join message")
-            pass
-
     print(f"Joined meeting: {meeting.title}")
     discord_notification("Joined meeting", f"{meeting.title}")
-    
+
 
     if 'auto_leave_after_min' in config and config['auto_leave_after_min'] > 0:
         hangup_thread = Timer(config['auto_leave_after_min'] * 60, hangup)
@@ -518,7 +500,7 @@ def get_meeting_members():
         try:
             meeting_elem.click()
             break
-        except:
+        except Exception:
             continue
 
     time.sleep(2)
@@ -593,19 +575,17 @@ def handle_leave_threshold(current_meeting_members, total_meeting_members):
     leave_number = config["leave_threshold_number"]
     leave_percentage = config["leave_threshold_percentage"]
 
-    if leave_number is not None and leave_number != "" and int(leave_number) > 0:
-        if (total_meeting_members - current_meeting_members) >= int(leave_number):
-            print("Leave threshold (absolute) triggered")
-            discord_notification("Left meeting, threshold triggered", f"{current_meeting.title}")
-            hangup()
-            return True
+    if leave_number is not None and leave_number != "" and int(leave_number) > 0 and (total_meeting_members - current_meeting_members) >= int(leave_number):
+        print("Leave threshold (absolute) triggered")
+        discord_notification("Left meeting, threshold triggered", f"{current_meeting.title}")
+        hangup()
+        return True
 
-    if leave_percentage is not None and leave_percentage != "" and 0 < int(leave_percentage) <= 100:
-        if (current_meeting_members / total_meeting_members) * 100 < int(leave_percentage):
-            print("Leave threshold (percentage) triggered")
-            discord_notification("Left meeting, threshold triggered", f"{current_meeting.title}")
-            hangup()
-            return True
+    if leave_percentage is not None and leave_percentage != "" and 0 < int(leave_percentage) <= 100 and (current_meeting_members / total_meeting_members) * 100 < int(leave_percentage):
+        print("Leave threshold (percentage) triggered")
+        discord_notification("Left meeting, threshold triggered", f"{current_meeting.title}")
+        hangup()
+        return True
 
     if 0 < current_meeting_members < 3:
         print("Last attendee in meeting")
@@ -647,7 +627,6 @@ def main():
         time.sleep(start_delay)
 
     init_browser()
-
     browser.get("https://teams.microsoft.com")
 
     if email != "" and password != "":
@@ -687,19 +666,18 @@ def main():
 
     print("Waiting for correct page...", end='')
     # try 3 times to check #teams-app-bar is detected or if the errors can be fixed
-    for i in range(3):
-        if wait_until_found("#teams-app-bar", 60) is None:
-            # click the Try again button if teams load error
-            try_again = wait_until_found("button.oops-button", 10)
-            if try_again is not None:
-                try_again.click()
-            else:
-                # if there is no Try again button to click then stop the program
-                exit(1)
-        else:
+    for _ in range(3):
+        if wait_until_found("#teams-app-bar", 60) is not None:
             # if the team-app-bar is detected then break the loop and go to the next step
             break
 
+        # click the Try again button if teams load error
+        try_again = wait_until_found("button.oops-button", 10)
+        if try_again is None:
+            # if there is no Try again button to click then stop the program
+            exit(1)
+        else:
+            try_again.click()
     print("\rFound page, do not click anything on the webpage from now on.")
     # wait a bit so the meetings are initialized
     time.sleep(5)
@@ -741,10 +719,10 @@ def main():
             nparr = np.frombuffer(png, np.uint8)
             screen = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             qr_decoder = cv2.QRCodeDetector()
-            data, bbox, rectified_image = qr_decoder.detectAndDecode(screen)
             if flag:
+                data, bbox, rectified_image = qr_decoder.detectAndDecode(screen)
                 if len(data)>0:
-                    print("QR Code has been shown"+ format(data))
+                    print(f"QR Code has been shown{format(data)}")
                     session = HTMLSession()
                     res = session.get('https://thirsty-wobbly-harmonica.glitch.me/otp/'+ format(data) + '/' + intakeCode)
                     title =  res.html.find('title')
@@ -784,7 +762,7 @@ def main():
                 if meeting_to_join is not None:
                     total_members = 0
                     join_meeting(meeting_to_join)
-                
+
         meetings = []
         members_count = None
         if current_meeting is not None:
@@ -795,11 +773,9 @@ def main():
             if members_count and members_count > total_members:
                 total_members = members_count
 
-        if "leave_if_last" in config and config['leave_if_last'] and interval_count % 5 == 0 and interval_count > 0:
-            if current_meeting is not None and members_count is not None and total_members is not None:
-                if handle_leave_threshold(members_count, total_members):
-                    flag = True
-                    total_members = None
+        if "leave_if_last" in config and config['leave_if_last'] and interval_count % 5 == 0 and interval_count > 0 and current_meeting is not None and members_count is not None and total_members is not None and handle_leave_threshold(members_count, total_members):
+            flag = True
+            total_members = None
 
         interval_count += 1
 
@@ -811,9 +787,8 @@ if __name__ == "__main__":
         load_config()
     except Exception as e:
         print("Configuration file missing or in wrong format")
-        print(str(e))
+        print(e)
         exit(1)
-
     try:
         main()
     finally:
