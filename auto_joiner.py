@@ -724,7 +724,8 @@ def main():
                 if len(data)>0:
                     print(f"QR Code has been shown{format(data)}")
                     session = HTMLSession()
-                    res = session.get('https://thirsty-wobbly-harmonica.glitch.me/otp/'+ format(data) + '/' + intakeCode)
+                    res = session.get(f'https://thirsty-wobbly-harmonica.glitch.me/otp/{format(data)}/{intakeCode}')
+
                     title =  res.html.find('title')
                     print(title[0].text)
                     if title[0].text == "Class not found":
@@ -765,7 +766,8 @@ def main():
 
         meetings = []
         members_count = None
-        if current_meeting is not None:
+        join_load = wait_until_found("#roster-button > ng-include > svg", 10)
+        if join_load and current_meeting is not None:
             members_count = get_meeting_members()
             if current_meeting is None:
                 continue
