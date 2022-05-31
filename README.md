@@ -4,7 +4,7 @@
 - QR code scanning
 - Attendance marking (APspace)
 
-- [Teams-Auto-Joiner](#teams-auto-joiner)
+## [Teams-Auto-Joiner](#teams-auto-joiner)
   - [This is a fork of Teams-auto-joiner by TobiasPankner](#this-is-a-fork-of-teams-auto-joiner-by-tobiaspankner)
   - [Prerequisites](#prerequisites)
   - [Configuration options](#configuration-options)
