@@ -1,4 +1,8 @@
-# Teams-Auto-Joiner with QR code scanning feature (APspace)
+# Teams-Auto-Joiner with QR code scanning attendace feature (APspace)
+
+# Changes
+- QR code scanning
+- Attendance marking (APspace)
 
 - [Teams-Auto-Joiner](#teams-auto-joiner)
   - [This is a fork of Teams-auto-joiner by TobiasPankner](#this-is-a-fork-of-teams-auto-joiner-by-tobiaspankner)
