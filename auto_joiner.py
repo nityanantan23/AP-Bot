@@ -144,9 +144,7 @@ def init_browser():
     if "chrome_type" in config and config['chrome_type'] == "msedge":
         chrome_options = EdgeOptions()
         chrome_options.use_chromium = True
-        path ="user-data-dir=C:\\Users\\{0}\\AppData\\Local\\Microsoft\\Edge\\User Data".format(os.environ.get('USERNAME'))
-        chrome_options.add_argument(path);
-
+        chrome_options.add_argument("-inprivate");
     else:
         chrome_options = webdriver.ChromeOptions()
 
@@ -506,14 +504,14 @@ def get_meeting_members():
     time.sleep(2)
 
     # open the meeting member side page
-    try:
-        browser.execute_script("document.getElementById('roster-button').click()")
-    except exceptions.JavascriptException:
-        print("Failed to open meeting member page")
-        return None
+    # try:
+    #     browser.execute_script("document.getElementById('roster-button').click()")
+    # except exceptions.JavascriptException:
+    #     print("Failed to open meeting member page")
+    #     return None
 
-    participants_elem = wait_until_found("calling-roster-section[section-key='participantsInCall'] .roster-list-title", 2, print_error=False)
-    attendees_elem = wait_until_found("calling-roster-section[section-key='attendeesInMeeting'] .roster-list-title", 2, print_error=False)
+    participants_elem = wait_until_found("#page-content-wrapper > div.flex-fill > div > calling-screen > div > div.ts-calling-screen.flex-fill.call-connected.PERSISTENT.PRESENTATION.passive-bar-available.has-meeting-info.closed-captions-hidden.show-participants-in-passive-bar.immersive > meeting-panel-components > calling-roster > div > div.scroll-container.flex-fill > div > div.scrolling-pane > accordion > div > accordion-section:nth-child(2) > div > calling-roster-section > div > div.roster-list-title-group.has-roster-limit > button.roster-list-title", 2, print_error=False)
+    attendees_elem = wait_until_found("#page-content-wrapper > div.flex-fill > div > calling-screen > div > div.ts-calling-screen.flex-fill.call-connected.PERSISTENT.PRESENTATION.passive-bar-available.has-meeting-info.closed-captions-hidden.show-participants-in-passive-bar.immersive > meeting-panel-components > calling-roster > div > div.scroll-container.flex-fill > div > div.scrolling-pane > accordion > div > accordion-section:nth-child(3) > div > calling-roster-section > div > div.roster-list-title-group.has-roster-limit > button", 2, print_error=False)
 
     if participants_elem is None and attendees_elem is None:
         print("Failed to get meeting members")
@@ -530,16 +528,16 @@ def get_meeting_members():
         attendees = [0]
 
     # close the meeting member side page, this only makes a difference if pause_search is true
-    try:
-        browser.execute_script("document.getElementById('roster-button').click()")
-    except exceptions.JavascriptException:
-        # if the roster button doesn't exist click the three dots button before
-        try:
-            browser.execute_script("document.getElementById('callingButtons-showMoreBtn').click()")
-            time.sleep(1)
-            browser.execute_script("document.getElementById('roster-button').click()")
-        except exceptions.JavascriptException:
-            print("Failed to close meeting member page, this might result in an error on next search")
+    # try:
+    #     browser.execute_script("document.getElementById('roster-button').click()")
+    # except exceptions.JavascriptException:
+    #     # if the roster button doesn't exist click the three dots button before
+    #     try:
+    #         browser.execute_script("document.getElementById('callingButtons-showMoreBtn').click()")
+    #         time.sleep(1)
+    #         browser.execute_script("document.getElementById('roster-button').click()")
+    #     except exceptions.JavascriptException:
+    #         print("Failed to close meeting member page, this might result in an error on next search")
 
     return sum(participants + attendees)
 
