@@ -1,6 +1,10 @@
-# Teams-Auto-Joiner
+# Teams-Auto-Joiner with QR code scanning attendace feature (APspace)
+## Read untill the end
+# Changes
+- QR code scanning
+- Attendance marking (APspace)
 
-- [Teams-Auto-Joiner](#teams-auto-joiner)
+## [Teams-Auto-Joiner](#teams-auto-joiner)
   - [This is a fork of Teams-auto-joiner by TobiasPankner](#this-is-a-fork-of-teams-auto-joiner-by-tobiaspankner)
   - [Prerequisites](#prerequisites)
   - [Configuration options](#configuration-options)
@@ -116,4 +120,17 @@ If using microsoft edge, enable "Clear browsing data on close" on microsoft edge
 3.  Install dependencies: `pip install -r requirements.txt`
 4.  Run [auto_joiner.py](auto_joiner.py): `python auto_joiner.py`
 5.  After starting, teams might be in Grid view, if this is the case change the view to list [(How to do)](https://support.microsoft.com/en-us/office/view-and-organize-your-teams-b9dd0d8c-243a-43a4-9501-ec8017fec32e)
-    <img src="https://i.imgur.com/GODoJYf.png?2" width="300" height="245" />
+<img src="https://i.imgur.com/GODoJYf.png?2" width="300" height="245" />
+
+## Side note
+- If you want Charles proxy license, you can get here [https://www.buymeacoffee.com/bnityanantZ](https://www.buymeacoffee.com/bnityanantZ/e/73591)
+
+## Disclaimer
+This repo was created for educational purposes only. Use it on your own risk.  
+
+
+## Buy me a coffee
+If You'd like to thank me you can buy me a coffee. coffee is never too much :)
+
+https://www.buymeacoffee.com/bnityanantZ
+
